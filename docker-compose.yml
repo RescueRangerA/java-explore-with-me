@@ -15,7 +15,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
 
   stats-db:
-    image: postgres:14-alpine
+    image: postgres:13.7-alpine
     volumes:
       - /var/lib/postgresql/data/
       - /etc/timezone:/etc/timezone:ro
@@ -37,7 +37,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
 
   ewm-db:
-    image: postgres:14-alpine
+    image: postgres:13.7-alpine
     volumes:
       - /var/lib/postgresql/data/
       - /etc/timezone:/etc/timezone:ro
