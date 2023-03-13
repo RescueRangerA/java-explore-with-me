@@ -16,10 +16,30 @@ services:
 
   stats-db:
     image: postgres:14-alpine
-    ports:
-      - "6541:5432"
     volumes:
       - /var/lib/postgresql/data/
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     env_file: .stats-db-credentials.env
+
+  ewm-service:
+    build: ./ewm
+    image: docker-image-application-ewm:0.0.1
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ewm-db
+    env_file: .ewm-db-credentials.env
+    environment:
+      - SERVER_PORT=8080
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  ewm-db:
+    image: postgres:14-alpine
+    volumes:
+      - /var/lib/postgresql/data/
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    env_file: .ewm-db-credentials.env
