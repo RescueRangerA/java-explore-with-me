@@ -1,6 +1,7 @@
 package ru.practicum.stats.mapper;
 
 import org.springframework.stereotype.Component;
+import ru.practicum.stats.controller.dto.EndpointHitDto;
 import ru.practicum.stats.utils.CustomDateTimeFormatter;
 import ru.practicum.stats.controller.dto.ViewStats;
 import ru.practicum.stats.model.EndpointHit;
@@ -15,7 +16,7 @@ public class ModelMapper {
         this.dateTimeFormatter = dateTimeFormatter;
     }
 
-    public EndpointHit toEndpointHit(ru.practicum.stats.controller.dto.EndpointHit endpointHitDto) {
+    public EndpointHit toEndpointHit(EndpointHitDto endpointHitDto) {
         return new EndpointHit(
                 0L,
                 endpointHitDto.getId(),

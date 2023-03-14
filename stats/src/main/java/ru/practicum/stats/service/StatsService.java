@@ -4,6 +4,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import ru.practicum.stats.controller.dto.EndpointHitDto;
 import ru.practicum.stats.utils.CustomDateTimeFormatter;
 import ru.practicum.stats.mapper.ModelMapper;
 import ru.practicum.stats.controller.StatsControllerApiDelegate;
@@ -51,7 +52,7 @@ public class StatsService implements StatsControllerApiDelegate {
     }
 
     @Override
-    public ResponseEntity<Void> hit(ru.practicum.stats.controller.dto.EndpointHit endpointHitDto) {
+    public ResponseEntity<Void> hit(EndpointHitDto endpointHitDto) {
         endpointHitRepository.save(modelMapper.toEndpointHit(endpointHitDto));
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
