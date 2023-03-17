@@ -30,7 +30,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EndpointHit"
+                "$ref": "#/components/schemas/EndpointHitDto"
               }
             }
           },
@@ -112,7 +112,7 @@
   },
   "components": {
     "schemas": {
-      "EndpointHit": {
+      "EndpointHitDto": {
         "type": "object",
         "properties": {
           "id": {
