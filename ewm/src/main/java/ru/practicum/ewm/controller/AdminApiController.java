@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
@@ -63,7 +64,7 @@ public class AdminApiController {
     public ResponseEntity<CategoryDto> adminAddCategory(
             @Parameter(name = "NewCategoryDto", description = "данные добавляемой категории", required = true) @Valid @RequestBody NewCategoryDto newCategoryDto
     ) {
-        return adminService.adminAddCategory(newCategoryDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.adminAddCategory(newCategoryDto));
     }
 
 
@@ -100,7 +101,7 @@ public class AdminApiController {
     public ResponseEntity<CompilationDto> adminAddCompilation(
             @Parameter(name = "NewCompilationDto", description = "данные новой подборки", required = true) @Valid @RequestBody NewCompilationDto newCompilationDto
     ) {
-        return adminService.adminAddCompilation(newCompilationDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.adminAddCompilation(newCompilationDto));
     }
 
 
@@ -137,7 +138,7 @@ public class AdminApiController {
     public ResponseEntity<UserDto> adminAddUser(
             @Parameter(name = "NewUserRequest", description = "Данные добавляемого пользователя", required = true) @Valid @RequestBody NewUserRequest newUserRequest
     ) {
-        return adminService.adminAddUser(newUserRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.adminAddUser(newUserRequest));
     }
 
 
@@ -173,7 +174,9 @@ public class AdminApiController {
     public ResponseEntity<Void> adminDeleteCategory(
             @Parameter(name = "catId", description = "id категории", required = true, in = ParameterIn.PATH) @PathVariable("catId") Long catId
     ) {
-        return adminService.adminDeleteCategory(catId);
+        adminService.adminDeleteCategory(catId);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 
@@ -203,7 +206,9 @@ public class AdminApiController {
     public ResponseEntity<Void> adminDeleteCompilation(
             @Parameter(name = "compId", description = "id подборки", required = true, in = ParameterIn.PATH) @PathVariable("compId") Long compId
     ) {
-        return adminService.adminDeleteCompilation(compId);
+        adminService.adminDeleteCompilation(compId);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 
@@ -233,7 +238,9 @@ public class AdminApiController {
     public ResponseEntity<Void> adminDeleteUser(
             @Parameter(name = "userId", description = "id пользователя", required = true, in = ParameterIn.PATH) @PathVariable("userId") Long userId
     ) {
-        return adminService.adminDeleteUser(userId);
+        adminService.adminDeleteUser(userId);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 
@@ -279,7 +286,7 @@ public class AdminApiController {
             @Min(0) @Parameter(name = "from", description = "количество событий, которые нужно пропустить для формирования текущего набора", in = ParameterIn.QUERY) @Valid @RequestParam(value = "from", required = false, defaultValue = "0") Integer from,
             @Min(1) @Parameter(name = "size", description = "количество событий в наборе", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "10") Integer size
     ) {
-        return adminService.adminSearchEvents(users, states, categories, rangeStart, rangeEnd, from, size);
+        return ResponseEntity.ok(adminService.adminSearchEvents(users, states, categories, rangeStart, rangeEnd, from, size));
     }
 
 
@@ -317,7 +324,7 @@ public class AdminApiController {
             @Min(0) @Parameter(name = "from", description = "количество элементов, которые нужно пропустить для формирования текущего набора", in = ParameterIn.QUERY) @Valid @RequestParam(value = "from", required = false, defaultValue = "0") Integer from,
             @Min(1) @Parameter(name = "size", description = "количество элементов в наборе", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "10") Integer size
     ) {
-        return adminService.adminSearchUsers(ids, from, size);
+        return ResponseEntity.ok(adminService.adminSearchUsers(ids, from, size));
     }
 
 
@@ -358,7 +365,7 @@ public class AdminApiController {
             @Parameter(name = "catId", description = "id категории", required = true, in = ParameterIn.PATH) @PathVariable("catId") Long catId,
             @Parameter(name = "CategoryDto", description = "Данные категории для изменения", required = true) @Valid @RequestBody CategoryDto categoryDto
     ) {
-        return adminService.adminUpdateCategory(catId, categoryDto);
+        return ResponseEntity.ok(adminService.adminUpdateCategory(catId, categoryDto));
     }
 
 
@@ -393,7 +400,7 @@ public class AdminApiController {
             @Parameter(name = "compId", description = "id подборки", required = true, in = ParameterIn.PATH) @PathVariable("compId") Long compId,
             @Parameter(name = "UpdateCompilationRequest", description = "данные для обновления подборки", required = true) @Valid @RequestBody UpdateCompilationRequest updateCompilationRequest
     ) {
-        return adminService.adminUpdateCompilation(compId, updateCompilationRequest);
+        return ResponseEntity.ok(adminService.adminUpdateCompilation(compId, updateCompilationRequest));
     }
 
 
@@ -434,7 +441,7 @@ public class AdminApiController {
             @Parameter(name = "eventId", description = "id события", required = true, in = ParameterIn.PATH) @PathVariable("eventId") Long eventId,
             @Parameter(name = "UpdateEventAdminRequest", description = "Данные для изменения информации о событии", required = true) @Valid @RequestBody UpdateEventAdminRequest updateEventAdminRequest
     ) {
-        return adminService.adminUpdateEvent(eventId, updateEventAdminRequest);
+        return ResponseEntity.ok(adminService.adminUpdateEvent(eventId, updateEventAdminRequest));
     }
 
 }

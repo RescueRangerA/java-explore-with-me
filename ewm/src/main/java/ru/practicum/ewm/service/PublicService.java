@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.CustomDateTimeFormatter;
@@ -55,31 +54,28 @@ public class PublicService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<List<CategoryDto>> publicSearchCategories(Integer from, Integer size) {
+    public List<CategoryDto> publicSearchCategories(Integer from, Integer size) {
         CustomPageableParameters pageableParameters = CustomPageableParameters.of(from, size);
 
-        return ResponseEntity.ok(
-                eventCategoryRepository
-                        .findAll(pageableParameters.toPageable())
-                        .stream()
-                        .map(modelMapper::toCategoryDto)
-                        .collect(Collectors.toList())
-        );
+        return eventCategoryRepository
+                .findAll(pageableParameters.toPageable())
+                .stream()
+                .map(modelMapper::toCategoryDto)
+                .collect(Collectors.toList())
+                ;
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<CategoryDto> publicGetCategory(Long catId) {
-        return ResponseEntity.ok(
-                modelMapper
-                        .toCategoryDto(eventCategoryRepository
-                                .findById(catId)
-                                .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(EventCategory.class, catId))
-                        )
-        );
+    public CategoryDto publicGetCategory(Long catId) {
+        return modelMapper
+                .toCategoryDto(eventCategoryRepository
+                        .findById(catId)
+                        .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(EventCategory.class, catId))
+                );
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<CompilationDto> publicGetCompilation(Long compId) {
+    public CompilationDto publicGetCompilation(Long compId) {
         EventCompilation eventCompilation = eventCompilationRepository
                 .findById(compId)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(EventCompilation.class, compId));
@@ -94,17 +90,15 @@ public class PublicService {
 
         Map<Long, Long> eventAndViews = statsClientEwmWrapper.fetchViewsOfEventIds(List.copyOf(eventWithCount.keySet()));
 
-        return ResponseEntity.ok(
-                modelMapper.toCompilationDto(
-                        eventCompilation,
-                        eventWithCount,
-                        eventAndViews
-                )
+        return modelMapper.toCompilationDto(
+                eventCompilation,
+                eventWithCount,
+                eventAndViews
         );
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<List<CompilationDto>> publicSearchCompilations(Boolean pinned, Integer from, Integer size) {
+    public List<CompilationDto> publicSearchCompilations(Boolean pinned, Integer from, Integer size) {
         CustomPageableParameters pageableParameters = CustomPageableParameters.of(from, size);
 
         Page<EventCompilation> eventCompilationPage = eventCompilationRepository.findAllByPinnedIs(
@@ -120,23 +114,21 @@ public class PublicService {
 
         Map<Long, Long> eventAndViews = statsClientEwmWrapper.fetchViewsOfEventIds(List.copyOf(eventWithCount.keySet()));
 
-        return ResponseEntity.ok(
-                eventCompilationPage
-                        .stream()
-                        .map(
-                                eventCompilation -> modelMapper.toCompilationDto(
-                                        eventCompilation,
-                                        eventWithCount,
-                                        eventAndViews
-                                )
+        return eventCompilationPage
+                .stream()
+                .map(
+                        eventCompilation -> modelMapper.toCompilationDto(
+                                eventCompilation,
+                                eventWithCount,
+                                eventAndViews
                         )
-                        .collect(Collectors.toList())
-        );
+                )
+                .collect(Collectors.toList());
     }
 
 
     @Transactional(readOnly = true)
-    public ResponseEntity<EventFullDto> publicGetEvent(Long id) {
+    public EventFullDto publicGetEvent(Long id) {
         statsClientEwmWrapper.registerHit();
 
         // событие должно быть опубликовано
@@ -150,17 +142,15 @@ public class PublicService {
                 .findByIdWithParticipationCount(id, specificationForPublished)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(Event.class, id));
 
-        return ResponseEntity.ok(
-                modelMapper.toEventFullDto(
-                        eventWithCount.getEvent(),
-                        eventWithCount.getParticipationCount(),
-                        statsClientEwmWrapper.fetchViewsOfEvent(eventWithCount.getEvent())
-                )
+        return modelMapper.toEventFullDto(
+                eventWithCount.getEvent(),
+                eventWithCount.getParticipationCount(),
+                statsClientEwmWrapper.fetchViewsOfEvent(eventWithCount.getEvent())
         );
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<List<EventShortDto>> publicSearchEvents(
+    public List<EventShortDto> publicSearchEvents(
             String text,
             List<Long> categories,
             Boolean paid,
@@ -225,19 +215,19 @@ public class PublicService {
             );
         }
 
-
-        return ResponseEntity.ok(
-                eventWithCount
-                        .stream()
-                        .peek(e -> statsClientEwmWrapper.registerHitByEvent(e.getEvent()))
-                        .map(
-                                e -> modelMapper.toEventShortDto(
-                                        e.getEvent(),
-                                        e.getParticipationCount(),
-                                        views.get(e.getEvent().getId())
-                                )
-                        )
-                        .collect(Collectors.toList())
+        statsClientEwmWrapper.registerMultipleHitsByEvent(
+                eventWithCount.stream().map(EventWithCount::getEvent).collect(Collectors.toList())
         );
+
+        return eventWithCount
+                .stream()
+                .map(
+                        e -> modelMapper.toEventShortDto(
+                                e.getEvent(),
+                                e.getParticipationCount(),
+                                views.get(e.getEvent().getId())
+                        )
+                )
+                .collect(Collectors.toList());
     }
 }

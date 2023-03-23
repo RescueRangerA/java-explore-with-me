@@ -2,8 +2,6 @@ package ru.practicum.ewm.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.CustomDateTimeFormatter;
@@ -65,7 +63,7 @@ public class PrivateService {
     }
 
     @Transactional
-    public ResponseEntity<EventFullDto> privateAddEvent(Long userId, NewEventDto newEventDto) {
+    public EventFullDto privateAddEvent(Long userId, NewEventDto newEventDto) {
         User currentUser = userRepository
                 .findById(userId)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(User.class, userId));
@@ -80,19 +78,15 @@ public class PrivateService {
             throw EventMutationViolationException.ofIncorrectCreateAndStartDateCreate(event.getCreatedOn(), event.getStartedOn());
         }
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(
-                        modelMapper.toEventFullDto(
-                                eventRepository.save(event),
-                                0L,
-                                0L
-                        )
-                );
+        return modelMapper.toEventFullDto(
+                eventRepository.save(event),
+                0L,
+                0L
+        );
     }
 
     @Transactional
-    public ResponseEntity<ParticipationRequestDto> privateAddParticipationRequest(Long userId, Long eventId) {
+    public ParticipationRequestDto privateAddParticipationRequest(Long userId, Long eventId) {
         User currentUser = userRepository
                 .findById(userId)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(User.class, userId));
@@ -126,15 +120,13 @@ public class PrivateService {
             request.setStatus(EventParticipationRequestStatus.CONFIRMED);
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                modelMapper.toParticipationRequestDto(
-                        eventParticipationRequestRepository.save(request)
-                )
+        return modelMapper.toParticipationRequestDto(
+                eventParticipationRequestRepository.save(request)
         );
     }
 
     @Transactional
-    public ResponseEntity<ParticipationRequestDto> privateCancelParticipationRequest(Long userId, Long requestId) {
+    public ParticipationRequestDto privateCancelParticipationRequest(Long userId, Long requestId) {
         User currentUser = userRepository
                 .findById(userId)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(User.class, userId));
@@ -149,13 +141,11 @@ public class PrivateService {
 
         request.setStatus(EventParticipationRequestStatus.CANCELED);
 
-        return ResponseEntity.ok(
-                modelMapper.toParticipationRequestDto(request)
-        );
+        return modelMapper.toParticipationRequestDto(request);
     }
 
     @Transactional
-    public ResponseEntity<EventRequestStatusUpdateResult> privateChangeRequestStatus(
+    public EventRequestStatusUpdateResult privateChangeRequestStatus(
             Long userId,
             Long eventId,
             EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest
@@ -198,7 +188,7 @@ public class PrivateService {
 
                 if (request.getStatus().equals(EventParticipationRequestStatus.PENDING)) {
                     request.setStatus(EventParticipationRequestStatus.CONFIRMED);
-                    availableRequestCount++;
+                    availableRequestCount--;
                     confirmedList.add(request);
                 } else {
                     throw EventRequestMutationViolationException.ofUnchangeableRequestStatus(
@@ -219,16 +209,14 @@ public class PrivateService {
             }
         }
 
-        return ResponseEntity.ok(
-                modelMapper.toEventRequestStatusUpdateResult(
-                        confirmedList,
-                        rejectedList
-                )
+        return modelMapper.toEventRequestStatusUpdateResult(
+                confirmedList,
+                rejectedList
         );
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<EventFullDto> privateGetEvent(Long userId, Long eventId) {
+    public EventFullDto privateGetEvent(Long userId, Long eventId) {
         User currentUser = userRepository
                 .findById(userId)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(User.class, userId));
@@ -243,18 +231,16 @@ public class PrivateService {
                 .findByIdWithParticipationCount(eventId, specificationForCurrentUser)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(Event.class, eventId));
 
-        return ResponseEntity.ok(
-                modelMapper.toEventFullDto(
-                        eventWithCount.getEvent(),
-                        eventWithCount.getParticipationCount(),
-                        statsClientEwmWrapper.fetchViewsOfEvent(eventWithCount.getEvent())
-                )
+        return modelMapper.toEventFullDto(
+                eventWithCount.getEvent(),
+                eventWithCount.getParticipationCount(),
+                statsClientEwmWrapper.fetchViewsOfEvent(eventWithCount.getEvent())
         );
     }
 
 
     @Transactional(readOnly = true)
-    public ResponseEntity<List<ParticipationRequestDto>> privateGetEventParticipants(Long userId, Long eventId) {
+    public List<ParticipationRequestDto> privateGetEventParticipants(Long userId, Long eventId) {
         User currentUser = userRepository
                 .findById(userId)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(User.class, userId));
@@ -267,17 +253,15 @@ public class PrivateService {
             throw AccessDeniedException.ofEventAndUser(event, currentUser);
         }
 
-        return ResponseEntity.ok(
-                eventParticipationRequestRepository
-                        .findAllByEvent(event)
-                        .stream()
-                        .map(modelMapper::toParticipationRequestDto)
-                        .collect(Collectors.toList())
-        );
+        return eventParticipationRequestRepository
+                .findAllByEvent(event)
+                .stream()
+                .map(modelMapper::toParticipationRequestDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<List<EventShortDto>> privateSearchEvents(Long userId, Integer from, Integer size) {
+    public List<EventShortDto> privateSearchEvents(Long userId, Integer from, Integer size) {
         User currentUser = userRepository
                 .findById(userId)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(User.class, userId));
@@ -300,37 +284,33 @@ public class PrivateService {
                 eventWithCount.stream().map(EventWithCount::getEvent).map(Event::getId).collect(Collectors.toList())
         );
 
-        return ResponseEntity.ok(
-                eventWithCount
-                        .stream()
-                        .map(
-                                e -> modelMapper.toEventShortDto(
-                                        e.getEvent(),
-                                        e.getParticipationCount(),
-                                        views.get(e.getEvent().getId())
-                                )
+        return eventWithCount
+                .stream()
+                .map(
+                        e -> modelMapper.toEventShortDto(
+                                e.getEvent(),
+                                e.getParticipationCount(),
+                                views.get(e.getEvent().getId())
                         )
-                        .collect(Collectors.toList())
-        );
+                )
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<List<ParticipationRequestDto>> privateSearchUserRequests(Long userId) {
+    public List<ParticipationRequestDto> privateSearchUserRequests(Long userId) {
         User currentUser = userRepository
                 .findById(userId)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(User.class, userId));
 
-        return ResponseEntity.ok(
-                eventParticipationRequestRepository
-                        .findAllByCreator(currentUser)
-                        .stream()
-                        .map(modelMapper::toParticipationRequestDto)
-                        .collect(Collectors.toList())
-        );
+        return eventParticipationRequestRepository
+                .findAllByCreator(currentUser)
+                .stream()
+                .map(modelMapper::toParticipationRequestDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional
-    public ResponseEntity<EventFullDto> privateUpdateEvent(
+    public EventFullDto privateUpdateEvent(
             Long userId,
             Long eventId,
             UpdateEventUserRequest updateEventUserRequest
@@ -412,12 +392,10 @@ public class PrivateService {
             }
         }
 
-        return ResponseEntity.ok(
-                modelMapper.toEventFullDto(
-                        event,
-                        participationCount,
-                        statsClientEwmWrapper.fetchViewsOfEvent(event)
-                )
+        return modelMapper.toEventFullDto(
+                event,
+                participationCount,
+                statsClientEwmWrapper.fetchViewsOfEvent(event)
         );
     }
 }

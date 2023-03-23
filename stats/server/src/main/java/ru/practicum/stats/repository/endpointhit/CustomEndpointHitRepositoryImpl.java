@@ -56,8 +56,8 @@ public class CustomEndpointHitRepositoryImpl implements CustomEndpointHitReposit
 
         return resultList.stream()
                 .map(t -> new ViewStatsProjection(
-                        t.get(0, uriAttr.getJavaType()),
                         t.get(1, appAttr.getJavaType()),
+                        t.get(0, uriAttr.getJavaType()),
                         t.get(2, Long.class)
                 ))
                 .collect(Collectors.toList());

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
@@ -67,7 +68,7 @@ public class PrivateApiController {
             @Parameter(name = "userId", description = "id текущего пользователя", required = true, in = ParameterIn.PATH) @PathVariable("userId") Long userId,
             @Parameter(name = "NewEventDto", description = "данные добавляемого события", required = true) @Valid @RequestBody NewEventDto newEventDto
     ) {
-        return privateService.privateAddEvent(userId, newEventDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(privateService.privateAddEvent(userId, newEventDto));
     }
 
 
@@ -111,7 +112,7 @@ public class PrivateApiController {
             @Parameter(name = "userId", description = "id текущего пользователя", required = true, in = ParameterIn.PATH) @PathVariable("userId") Long userId,
             @NotNull @Parameter(name = "eventId", description = "id события", required = true, in = ParameterIn.QUERY) @Valid @RequestParam(value = "eventId", required = true) Long eventId
     ) {
-        return privateService.privateAddParticipationRequest(userId, eventId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(privateService.privateAddParticipationRequest(userId, eventId));
     }
 
 
@@ -145,7 +146,7 @@ public class PrivateApiController {
             @Parameter(name = "userId", description = "id текущего пользователя", required = true, in = ParameterIn.PATH) @PathVariable("userId") Long userId,
             @Parameter(name = "requestId", description = "id запроса на участие", required = true, in = ParameterIn.PATH) @PathVariable("requestId") Long requestId
     ) {
-        return privateService.privateCancelParticipationRequest(userId, requestId);
+        return ResponseEntity.ok(privateService.privateCancelParticipationRequest(userId, requestId));
     }
 
 
@@ -192,7 +193,7 @@ public class PrivateApiController {
             @Parameter(name = "eventId", description = "id события текущего пользователя", required = true, in = ParameterIn.PATH) @PathVariable("eventId") Long eventId,
             @Parameter(name = "EventRequestStatusUpdateRequest", description = "Новый статус для заявок на участие в событии текущего пользователя", required = true) @Valid @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest
     ) {
-        return privateService.privateChangeRequestStatus(userId, eventId, eventRequestStatusUpdateRequest);
+        return ResponseEntity.ok(privateService.privateChangeRequestStatus(userId, eventId, eventRequestStatusUpdateRequest));
     }
 
 
@@ -232,7 +233,7 @@ public class PrivateApiController {
             @Parameter(name = "userId", description = "id текущего пользователя", required = true, in = ParameterIn.PATH) @PathVariable("userId") Long userId,
             @Parameter(name = "eventId", description = "id события", required = true, in = ParameterIn.PATH) @PathVariable("eventId") Long eventId
     ) {
-        return privateService.privateGetEvent(userId, eventId);
+        return ResponseEntity.ok(privateService.privateGetEvent(userId, eventId));
     }
 
 
@@ -268,7 +269,7 @@ public class PrivateApiController {
             @Parameter(name = "userId", description = "id текущего пользователя", required = true, in = ParameterIn.PATH) @PathVariable("userId") Long userId,
             @Parameter(name = "eventId", description = "id события", required = true, in = ParameterIn.PATH) @PathVariable("eventId") Long eventId
     ) {
-        return privateService.privateGetEventParticipants(userId, eventId);
+        return ResponseEntity.ok(privateService.privateGetEventParticipants(userId, eventId));
     }
 
 
@@ -306,7 +307,7 @@ public class PrivateApiController {
             @Min(0) @Parameter(name = "from", description = "количество элементов, которые нужно пропустить для формирования текущего набора", in = ParameterIn.QUERY) @Valid @RequestParam(value = "from", required = false, defaultValue = "0") Integer from,
             @Min(1) @Parameter(name = "size", description = "количество элементов в наборе", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "10") Integer size
     ) {
-        return privateService.privateSearchEvents(userId, from, size);
+        return ResponseEntity.ok(privateService.privateSearchEvents(userId, from, size));
     }
 
 
@@ -344,7 +345,7 @@ public class PrivateApiController {
     public ResponseEntity<List<ParticipationRequestDto>> privateSearchUserRequests(
             @Parameter(name = "userId", description = "id текущего пользователя", required = true, in = ParameterIn.PATH) @PathVariable("userId") Long userId
     ) {
-        return privateService.privateSearchUserRequests(userId);
+        return ResponseEntity.ok(privateService.privateSearchUserRequests(userId));
     }
 
 
@@ -391,7 +392,7 @@ public class PrivateApiController {
             @Parameter(name = "eventId", description = "id редактируемого события", required = true, in = ParameterIn.PATH) @PathVariable("eventId") Long eventId,
             @Parameter(name = "UpdateEventUserRequest", description = "Новые данные события", required = true) @Valid @RequestBody UpdateEventUserRequest updateEventUserRequest
     ) {
-        return privateService.privateUpdateEvent(userId, eventId, updateEventUserRequest);
+        return ResponseEntity.ok(privateService.privateUpdateEvent(userId, eventId, updateEventUserRequest));
     }
 
 }

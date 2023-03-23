@@ -2,8 +2,6 @@ package ru.practicum.ewm.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.CustomDateTimeFormatter;
@@ -63,51 +61,43 @@ public class AdminService {
     }
 
     @Transactional
-    public ResponseEntity<CategoryDto> adminAddCategory(NewCategoryDto newCategoryDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                modelMapper.toCategoryDto(
-                        eventCategoryRepository.save(
-                                modelMapper.toEventCategory(newCategoryDto)
-                        )
+    public CategoryDto adminAddCategory(NewCategoryDto newCategoryDto) {
+        return modelMapper.toCategoryDto(
+                eventCategoryRepository.save(
+                        modelMapper.toEventCategory(newCategoryDto)
                 )
         );
     }
 
     @Transactional
-    public ResponseEntity<Void> adminDeleteUser(Long userId) {
+    public void adminDeleteUser(Long userId) {
         userRepository.delete(
                 userRepository
                         .findById(userId)
                         .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(User.class, userId))
         );
-
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @Transactional
-    public ResponseEntity<Void> adminDeleteCategory(Long catId) {
+    public void adminDeleteCategory(Long catId) {
         eventCategoryRepository.delete(
                 eventCategoryRepository
                         .findById(catId)
                         .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(EventCategory.class, catId))
         );
-
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @Transactional
-    public ResponseEntity<Void> adminDeleteCompilation(Long compId) {
+    public void adminDeleteCompilation(Long compId) {
         eventCompilationRepository.delete(
                 eventCompilationRepository
                         .findById(compId)
                         .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(EventCompilation.class, compId))
         );
-
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<List<EventFullDto>> adminSearchEvents(
+    public List<EventFullDto> adminSearchEvents(
             List<Long> users,
             List<EventStatusRequestEnum> states,
             List<Long> categories,
@@ -146,22 +136,20 @@ public class AdminService {
                 eventWithCount.stream().map(EventWithCount::getEvent).map(Event::getId).collect(Collectors.toList())
         );
 
-        return ResponseEntity.ok(
-                eventWithCount
-                        .stream()
-                        .map((
-                                e -> modelMapper.toEventFullDto(
-                                        e.getEvent(),
-                                        e.getParticipationCount(),
-                                        views.get(e.getEvent().getId())
-                                )
-                        ))
-                        .collect(Collectors.toList())
-        );
+        return eventWithCount
+                .stream()
+                .map((
+                        e -> modelMapper.toEventFullDto(
+                                e.getEvent(),
+                                e.getParticipationCount(),
+                                views.get(e.getEvent().getId())
+                        )
+                ))
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<List<UserDto>> adminSearchUsers(List<Long> ids, Integer from, Integer size) {
+    public List<UserDto> adminSearchUsers(List<Long> ids, Integer from, Integer size) {
         List<User> users = Collections.emptyList();
 
         if (ids != null) {
@@ -171,22 +159,20 @@ public class AdminService {
             users = userRepository.findAll(pageableParameters.toPageable()).stream().collect(Collectors.toList());
         }
 
-        return ResponseEntity.ok(users.stream().map(modelMapper::toUserDto).collect(Collectors.toList()));
+        return users.stream().map(modelMapper::toUserDto).collect(Collectors.toList());
     }
 
     @Transactional
-    public ResponseEntity<UserDto> adminAddUser(NewUserRequest newUserRequest) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                modelMapper.toUserDto(
-                        userRepository.save(
-                                modelMapper.toUser(newUserRequest)
-                        )
+    public UserDto adminAddUser(NewUserRequest newUserRequest) {
+        return modelMapper.toUserDto(
+                userRepository.save(
+                        modelMapper.toUser(newUserRequest)
                 )
         );
     }
 
     @Transactional
-    public ResponseEntity<CompilationDto> adminAddCompilation(NewCompilationDto newCompilationDto) {
+    public CompilationDto adminAddCompilation(NewCompilationDto newCompilationDto) {
         Map<Long, EventWithCount> eventWithCount = eventRepository.findAllByIdsAndAppendConfirmedParticipationCount(
                 List.copyOf(newCompilationDto.getEvents())
         );
@@ -204,17 +190,15 @@ public class AdminService {
 
         Map<Long, Long> eventAndViews = statsClientEwmWrapper.fetchViewsOfEventIds(List.copyOf(eventWithCount.keySet()));
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                modelMapper.toCompilationDto(
-                        eventCompilation,
-                        eventWithCount,
-                        eventAndViews
-                )
+        return modelMapper.toCompilationDto(
+                eventCompilation,
+                eventWithCount,
+                eventAndViews
         );
     }
 
     @Transactional
-    public ResponseEntity<CategoryDto> adminUpdateCategory(Long catId, CategoryDto categoryDto) {
+    public CategoryDto adminUpdateCategory(Long catId, CategoryDto categoryDto) {
         EventCategory eventCategory = eventCategoryRepository
                 .findById(catId)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(EventCategory.class, catId));
@@ -223,11 +207,11 @@ public class AdminService {
             eventCategory.setName(categoryDto.getName());
         }
 
-        return ResponseEntity.ok(modelMapper.toCategoryDto(eventCategory));
+        return modelMapper.toCategoryDto(eventCategory);
     }
 
     @Transactional
-    public ResponseEntity<CompilationDto> adminUpdateCompilation(
+    public CompilationDto adminUpdateCompilation(
             Long compId,
             UpdateCompilationRequest updateCompilationRequest
     ) {
@@ -275,17 +259,15 @@ public class AdminService {
                         .collect(Collectors.toList())
         );
 
-        return ResponseEntity.ok(
-                modelMapper.toCompilationDto(
-                        eventCompilation,
-                        eventWithParticipationCountProjections,
-                        eventAndViews
-                )
+        return modelMapper.toCompilationDto(
+                eventCompilation,
+                eventWithParticipationCountProjections,
+                eventAndViews
         );
     }
 
     @Transactional
-    public ResponseEntity<EventFullDto> adminUpdateEvent(Long eventId, UpdateEventAdminRequest updateEventAdminRequest) {
+    public EventFullDto adminUpdateEvent(Long eventId, UpdateEventAdminRequest updateEventAdminRequest) {
         EventWithCount eventWithCount = eventRepository
                 .findByIdAndAppendConfirmedParticipationCount(eventId)
                 .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(Event.class, eventId));
@@ -360,12 +342,10 @@ public class AdminService {
             event.setTitle(updateEventAdminRequest.getTitle());
         }
 
-        return ResponseEntity.ok(
-                modelMapper.toEventFullDto(
-                        event,
-                        participationCount,
-                        statsClientEwmWrapper.fetchViewsOfEvent(event)
-                )
+        return modelMapper.toEventFullDto(
+                event,
+                participationCount,
+                statsClientEwmWrapper.fetchViewsOfEvent(event)
         );
     }
 }

@@ -20,8 +20,10 @@ import ru.practicum.ewm.controller.dto.ApiError;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.util.List;
 
 @RestControllerAdvice
 @Slf4j
@@ -38,8 +40,7 @@ public class ExceptionControllerAdvice {
 
         return new ResponseEntity<>(
                 new ApiError(
-                        Collections.emptyList(),
-//                        Arrays.stream(e.getStackTrace()).map(Object::toString).collect(Collectors.toList()),
+                        exceptionToListOfErrors(e),
                         e.getMessage(),
                         "For the requested operation the conditions are not met.",
                         ApiError.StatusEnum._403_FORBIDDEN,
@@ -55,8 +56,7 @@ public class ExceptionControllerAdvice {
 
         return new ResponseEntity<>(
                 new ApiError(
-                        Collections.emptyList(),
-//                        Arrays.stream(e.getStackTrace()).map(Object::toString).collect(Collectors.toList()),
+                        exceptionToListOfErrors(e),
                         e.getMessage(),
                         "Incorrectly made request.",
                         ApiError.StatusEnum._400_BAD_REQUEST,
@@ -72,8 +72,7 @@ public class ExceptionControllerAdvice {
 
         return new ResponseEntity<>(
                 new ApiError(
-                        Collections.emptyList(),
-//                        Arrays.stream(e.getStackTrace()).map(Object::toString).collect(Collectors.toList()),
+                        exceptionToListOfErrors(e),
                         e.getMessage(),
                         "Integrity constraint has been violated.",
                         ApiError.StatusEnum._409_CONFLICT,
@@ -89,8 +88,7 @@ public class ExceptionControllerAdvice {
 
         return new ResponseEntity<>(
                 new ApiError(
-                        Collections.emptyList(),
-//                        Arrays.stream(e.getStackTrace()).map(Object::toString).collect(Collectors.toList()),
+                        exceptionToListOfErrors(e),
                         e.getMessage(),
                         "The required object was not found.",
                         ApiError.StatusEnum._404_NOT_FOUND,
@@ -132,5 +130,13 @@ public class ExceptionControllerAdvice {
 
     protected String buildLogMessage(Exception e) {
         return "Resolved [" + LogFormatUtils.formatValue(e, -1, true) + "]";
+    }
+
+    protected List<String> exceptionToListOfErrors(Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+
+        return List.of(sw.toString());
     }
 }

@@ -66,7 +66,7 @@ public class PublicApiController {
     public ResponseEntity<CategoryDto> publicGetCategory(
             @Parameter(name = "catId", description = "id категории", required = true, in = ParameterIn.PATH) @PathVariable("catId") Long catId
     ) {
-        return publicService.publicGetCategory(catId);
+        return ResponseEntity.ok(publicService.publicGetCategory(catId));
     }
 
 
@@ -104,7 +104,7 @@ public class PublicApiController {
     public ResponseEntity<CompilationDto> publicGetCompilation(
             @Parameter(name = "compId", description = "id подборки", required = true, in = ParameterIn.PATH) @PathVariable("compId") Long compId
     ) {
-        return publicService.publicGetCompilation(compId);
+        return ResponseEntity.ok(publicService.publicGetCompilation(compId));
     }
 
 
@@ -142,7 +142,7 @@ public class PublicApiController {
     public ResponseEntity<EventFullDto> publicGetEvent(
             @Parameter(name = "id", description = "id события", required = true, in = ParameterIn.PATH) @PathVariable("id") Long id
     ) {
-        return publicService.publicGetEvent(id);
+        return ResponseEntity.ok(publicService.publicGetEvent(id));
     }
 
 
@@ -178,7 +178,7 @@ public class PublicApiController {
             @Min(0) @Parameter(name = "from", description = "количество категорий, которые нужно пропустить для формирования текущего набора", in = ParameterIn.QUERY) @Valid @RequestParam(value = "from", required = false, defaultValue = "0") Integer from,
             @Min(1) @Parameter(name = "size", description = "количество категорий в наборе", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "10") Integer size
     ) {
-        return publicService.publicSearchCategories(from, size);
+        return ResponseEntity.ok(publicService.publicSearchCategories(from, size));
     }
 
 
@@ -216,7 +216,7 @@ public class PublicApiController {
             @Min(0) @Parameter(name = "from", description = "количество элементов, которые нужно пропустить для формирования текущего набора", in = ParameterIn.QUERY) @Valid @RequestParam(value = "from", required = false, defaultValue = "0") Integer from,
             @Min(1) @Parameter(name = "size", description = "количество элементов в наборе", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "10") Integer size
     ) {
-        return publicService.publicSearchCompilations(pinned, from, size);
+        return ResponseEntity.ok(publicService.publicSearchCompilations(pinned, from, size));
     }
 
 
@@ -266,6 +266,8 @@ public class PublicApiController {
             @Min(0) @Parameter(name = "from", description = "количество событий, которые нужно пропустить для формирования текущего набора", in = ParameterIn.QUERY) @Valid @RequestParam(value = "from", required = false, defaultValue = "0") Integer from,
             @Min(1) @Parameter(name = "size", description = "количество событий в наборе", in = ParameterIn.QUERY) @Valid @RequestParam(value = "size", required = false, defaultValue = "10") Integer size
     ) {
-        return publicService.publicSearchEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+        return ResponseEntity.ok(
+                publicService.publicSearchEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size)
+        );
     }
 }

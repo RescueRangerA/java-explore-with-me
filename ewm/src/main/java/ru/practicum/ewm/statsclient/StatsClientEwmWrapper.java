@@ -1,7 +1,10 @@
 package ru.practicum.ewm.statsclient;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.practicum.ewm.CustomDateTimeFormatter;
 import ru.practicum.ewm.extension.WebUtils;
 import ru.practicum.ewm.model.Event;
@@ -14,6 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class StatsClientEwmWrapper {
 
     private final String serviceName;
@@ -45,11 +49,11 @@ public class StatsClientEwmWrapper {
                         webUtils.getClientIp(),
                         dateTimeFormatter.format(LocalDateTime.now())
                 )
-        );
+        ).block();
     }
 
-    public void registerHitByEvent(Event event) {
-        statsApiClient.hit(
+    public Mono<Void> registerHitByEvent(Event event) {
+        return statsApiClient.hit(
                 new EndpointHitDto(
                         0L,
                         serviceName,
@@ -60,17 +64,23 @@ public class StatsClientEwmWrapper {
         );
     }
 
+    public void registerMultipleHitsByEvent(List<Event> events) {
+        Flux.fromIterable(events).flatMap(this::registerHitByEvent).collectList().block();
+    }
+
     public Long fetchViewsOfEvent(Event event) {
         String uri = "/events/" + event.getId();
 
-        List<ViewStats> stats = statsApiClient.getStats(
+        Flux<ViewStats> stats = statsApiClient.getStats(
                 dateTimeFormatter.format(LocalDateTime.now().minusYears(1L)),
                 dateTimeFormatter.format(LocalDateTime.now().plusYears(1L)),
                 List.of(uri),
                 false
         );
 
-        Optional<ViewStats> viewStats = stats.stream().filter(s -> Objects.equals(s.getUri(), uri)).findFirst();
+        Optional<ViewStats> viewStats = Objects.requireNonNull(
+                stats.collectList().block()
+        ).stream().filter(s -> Objects.equals(s.getUri(), uri)).findFirst();
 
         return viewStats.isPresent() ? viewStats.get().getHits() : 0L;
     }
@@ -85,16 +95,18 @@ public class StatsClientEwmWrapper {
                 e -> e
         ));
 
-        List<ViewStats> stats = statsApiClient.getStats(
+        Flux<ViewStats> stats = statsApiClient.getStats(
                 dateTimeFormatter.format(LocalDateTime.now().minusYears(1L)),
                 dateTimeFormatter.format(LocalDateTime.now().plusYears(1L)),
                 List.copyOf(uris.keySet()),
                 false
         );
 
-        return stats.stream().collect(Collectors.toMap(
-                s -> uris.get(s.getUri()),
-                ViewStats::getHits
-        ));
+        return Objects.requireNonNull(stats.collectList().block())
+                .stream()
+                .collect(Collectors.toMap(
+                        s -> uris.get(s.getUri()),
+                        ViewStats::getHits
+                ));
     }
 }
