@@ -395,4 +395,94 @@ public class PrivateApiController {
         return ResponseEntity.ok(privateService.privateUpdateEvent(userId, eventId, updateEventUserRequest));
     }
 
+    /**
+     * POST /users/{userId}/events/{eventId}/reaction : Добавление реакции
+     *
+     * @param userId  id текущего пользователя (required)
+     * @param eventId id редактируемого события (required)
+     * @return Реакция добавлена (status code 201)
+     * or Запрос составлен некорректно (status code 400)
+     * or Событие или пользователь не найдено или недоступно (status code 404)
+     * or Нарушены правила добавления реакции (status code 409)
+     */
+    @Operation(
+            operationId = "privateAddReaction",
+            summary = "Добавление реакции",
+            description = "Реакции могут две: лайк или дизлайк",
+            tags = {"Private: События"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Реакция добавлена", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = NewEventReactionDto.class))
+                    }),
+                    @ApiResponse(responseCode = "400", description = "Запрос составлен некорректно", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
+                    }),
+                    @ApiResponse(responseCode = "404", description = "Событие или пользователь не найдено или недоступно", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
+                    }),
+                    @ApiResponse(responseCode = "409", description = "Нарушены правила добавления реакции", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
+                    })
+            }
+    )
+    @RequestMapping(
+            method = RequestMethod.POST,
+            value = "/users/{userId}/events/{eventId}/reaction",
+            produces = {"application/json"}
+    )
+    public ResponseEntity<NewEventReactionDto> privateAddReaction(
+            @Parameter(name = "userId", description = "id текущего пользователя", required = true, in = ParameterIn.PATH) @PathVariable("userId") Long userId,
+            @Parameter(name = "eventId", description = "id редактируемого события", required = true, in = ParameterIn.PATH) @PathVariable("eventId") Long eventId,
+            @Parameter(name = "reaction", description = "реакция", in = ParameterIn.QUERY) @Valid @RequestParam(value = "reaction", required = false) EventReactionEnum reaction
+    ) {
+        switch (reaction) {
+            case LIKE:
+                return ResponseEntity.status(HttpStatus.CREATED).body(privateService.addLikeOrDislikeEvent(userId, eventId, true));
+            case DISLIKE:
+                return ResponseEntity.status(HttpStatus.CREATED).body(privateService.addLikeOrDislikeEvent(userId, eventId, false));
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    }
+
+    /**
+     * DELETE /users/{userId}/events/{eventId}/reaction : Удаление реакции
+     *
+     * @param userId  id текущего пользователя (required)
+     * @param eventId id редактируемого события (required)
+     * @return Реакция удалена (status code 200)
+     * or Запрос составлен некорректно (status code 400)
+     * or Событие или пользователь не найдено или недоступно (status code 404)
+     */
+    @Operation(
+            operationId = "privateRemoveReaction",
+            summary = "Удаление реакции",
+            description = "Удаление реакции",
+            tags = {"Private: События"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Реакция удалена", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = NewEventReactionDto.class))
+                    }),
+                    @ApiResponse(responseCode = "400", description = "Запрос составлен некорректно", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
+                    }),
+                    @ApiResponse(responseCode = "404", description = "Событие или пользователь не найдено или недоступно", content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = ApiError.class))
+                    }),
+            }
+    )
+    @RequestMapping(
+            method = RequestMethod.DELETE,
+            value = "/users/{userId}/events/{eventId}/reaction",
+            produces = {"application/json"}
+    )
+    public ResponseEntity<Void> privateRemoveReaction(
+            @Parameter(name = "userId", description = "id текущего пользователя", required = true, in = ParameterIn.PATH) @PathVariable("userId") Long userId,
+            @Parameter(name = "eventId", description = "id редактируемого события", required = true, in = ParameterIn.PATH) @PathVariable("eventId") Long eventId
+    ) {
+        privateService.removeLikeOrDislikeEvent(userId, eventId);
+
+        return ResponseEntity.ok().build();
+    }
+
 }

@@ -17,6 +17,7 @@ import ru.practicum.ewm.repository.event.EventWithCount;
 import ru.practicum.ewm.repository.event.GetEventsQuerySpecification;
 import ru.practicum.ewm.repository.eventcategory.EventCategoryRepository;
 import ru.practicum.ewm.repository.eventcompilation.EventCompilationRepository;
+import ru.practicum.ewm.repository.eventreaction.EventReactionRepository;
 import ru.practicum.ewm.repository.user.UserRepository;
 import ru.practicum.ewm.statsclient.StatsClientEwmWrapper;
 
@@ -34,6 +35,8 @@ public class AdminService {
 
     private final EventRepository eventRepository;
 
+    private final EventReactionRepository eventReactionRepository;
+
     private final ModelMapper modelMapper;
 
     private final CustomDateTimeFormatter dateTimeFormatter;
@@ -46,7 +49,7 @@ public class AdminService {
                         EventCategoryRepository eventCategoryRepository,
                         EventCompilationRepository eventCompilationRepository,
                         EventRepository eventRepository,
-                        ModelMapper modelMapper,
+                        EventReactionRepository eventReactionRepository, ModelMapper modelMapper,
                         CustomDateTimeFormatter dateTimeFormatter,
                         StatsClientEwmWrapper statsClientEwmWrapper
     ) {
@@ -54,6 +57,7 @@ public class AdminService {
         this.eventCategoryRepository = eventCategoryRepository;
         this.eventCompilationRepository = eventCompilationRepository;
         this.eventRepository = eventRepository;
+        this.eventReactionRepository = eventReactionRepository;
         this.modelMapper = modelMapper;
         this.dateTimeFormatter = dateTimeFormatter;
         this.statsClientEwmWrapper = statsClientEwmWrapper;
@@ -132,9 +136,14 @@ public class AdminService {
                 pageableParameters.toPageable()
         );
 
-        Map<Long, Long> views = statsClientEwmWrapper.fetchViewsOfEventIds(
-                eventWithCount.stream().map(EventWithCount::getEvent).map(Event::getId).collect(Collectors.toList())
-        );
+        List<Long> eventIds = eventWithCount
+                .stream()
+                .map(EventWithCount::getEvent)
+                .map(Event::getId)
+                .collect(Collectors.toList());
+
+        Map<Long, Long> views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+        Map<Long, Long> ratings = eventReactionRepository.calculateEventsRating(eventIds);
 
         return eventWithCount
                 .stream()
@@ -142,7 +151,8 @@ public class AdminService {
                         e -> modelMapper.toEventFullDto(
                                 e.getEvent(),
                                 e.getParticipationCount(),
-                                views.get(e.getEvent().getId())
+                                views.get(e.getEvent().getId()),
+                                ratings.get(e.getEvent().getId())
                         )
                 ))
                 .collect(Collectors.toList());
@@ -188,12 +198,15 @@ public class AdminService {
                 )
         );
 
-        Map<Long, Long> eventAndViews = statsClientEwmWrapper.fetchViewsOfEventIds(List.copyOf(eventWithCount.keySet()));
+        List<Long> eventIds = List.copyOf(eventWithCount.keySet());
+        Map<Long, Long> eventAndViews = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+        Map<Long, Long> eventAndRatings = eventReactionRepository.calculateEventsRating(eventIds);
 
         return modelMapper.toCompilationDto(
                 eventCompilation,
                 eventWithCount,
-                eventAndViews
+                eventAndViews,
+                eventAndRatings
         );
     }
 
@@ -252,17 +265,19 @@ public class AdminService {
             eventCompilation.setTitle(updateCompilationRequest.getTitle());
         }
 
-        Map<Long, Long> eventAndViews = statsClientEwmWrapper.fetchViewsOfEventIds(
-                eventCompilation.getEvents()
-                        .stream()
-                        .map(Event::getId)
-                        .collect(Collectors.toList())
-        );
+        List<Long> eventIds = eventCompilation.getEvents()
+                .stream()
+                .map(Event::getId)
+                .collect(Collectors.toList());
+
+        Map<Long, Long> eventAndViews = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+        Map<Long, Long> eventAndRatings = eventReactionRepository.calculateEventsRating(eventIds);
 
         return modelMapper.toCompilationDto(
                 eventCompilation,
                 eventWithParticipationCountProjections,
-                eventAndViews
+                eventAndViews,
+                eventAndRatings
         );
     }
 
@@ -345,7 +360,8 @@ public class AdminService {
         return modelMapper.toEventFullDto(
                 event,
                 participationCount,
-                statsClientEwmWrapper.fetchViewsOfEvent(event)
+                statsClientEwmWrapper.fetchViewsOfEvent(event),
+                eventReactionRepository.calculateEventRating(event)
         );
     }
 }

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import javax.annotation.Generated;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.Objects;
@@ -16,8 +15,6 @@ import java.util.Objects;
 @lombok.Builder
 @lombok.NoArgsConstructor
 @lombok.AllArgsConstructor
-
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2023-03-20T18:18:39.930348+04:00[Europe/Saratov]")
 public class EventFullDto {
 
     @JsonProperty("annotation")
@@ -104,6 +101,9 @@ public class EventFullDto {
 
     @JsonProperty("views")
     private Long views;
+
+    @JsonProperty("rating")
+    private Long rating;
 
     public EventFullDto annotation(String annotation) {
         this.annotation = annotation;
@@ -428,6 +428,15 @@ public class EventFullDto {
         this.views = views;
     }
 
+    @Schema(name = "rating", example = "999", description = "Рейтинг события", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    public Long getRating() {
+        return rating;
+    }
+
+    public void setRating(Long rating) {
+        this.rating = rating;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -452,12 +461,13 @@ public class EventFullDto {
                 Objects.equals(this.requestModeration, eventFullDto.requestModeration) &&
                 Objects.equals(this.state, eventFullDto.state) &&
                 Objects.equals(this.title, eventFullDto.title) &&
-                Objects.equals(this.views, eventFullDto.views);
+                Objects.equals(this.views, eventFullDto.views) &&
+                Objects.equals(this.rating, eventFullDto.rating);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(annotation, category, confirmedRequests, createdOn, description, eventDate, id, initiator, location, paid, participantLimit, publishedOn, requestModeration, state, title, views);
+        return Objects.hash(annotation, category, confirmedRequests, createdOn, description, eventDate, id, initiator, location, paid, participantLimit, publishedOn, requestModeration, state, title, views, rating);
     }
 
     @Override
@@ -480,6 +490,7 @@ public class EventFullDto {
         sb.append("    state: ").append(toIndentedString(state)).append("\n");
         sb.append("    title: ").append(toIndentedString(title)).append("\n");
         sb.append("    views: ").append(toIndentedString(views)).append("\n");
+        sb.append("    rating: ").append(toIndentedString(rating)).append("\n");
         sb.append("}");
         return sb.toString();
     }

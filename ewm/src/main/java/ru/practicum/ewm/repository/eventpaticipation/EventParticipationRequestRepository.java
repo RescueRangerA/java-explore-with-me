@@ -6,11 +6,14 @@ import ru.practicum.ewm.model.EventParticipationRequest;
 import ru.practicum.ewm.model.User;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface EventParticipationRequestRepository extends JpaRepository<EventParticipationRequest, Long> {
     List<EventParticipationRequest> findAllByCreator(User creator);
 
     List<EventParticipationRequest> findAllByEvent(Event event);
+
+    Optional<EventParticipationRequest> findByCreatorAndEvent(User creator, Event event);
 
     List<EventParticipationRequest> findAllByIdIn(List<Long> ids);
 

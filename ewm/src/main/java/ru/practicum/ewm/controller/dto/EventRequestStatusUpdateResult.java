@@ -3,7 +3,6 @@ package ru.practicum.ewm.controller.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import javax.annotation.Generated;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +14,7 @@ import java.util.Objects;
 @lombok.Builder
 @lombok.NoArgsConstructor
 @lombok.AllArgsConstructor
-
 @Schema(name = "EventRequestStatusUpdateResult", description = "Результат подтверждения/отклонения заявок на участие в событии")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2023-03-20T18:18:39.930348+04:00[Europe/Saratov]")
 public class EventRequestStatusUpdateResult {
 
     @JsonProperty("confirmedRequests")

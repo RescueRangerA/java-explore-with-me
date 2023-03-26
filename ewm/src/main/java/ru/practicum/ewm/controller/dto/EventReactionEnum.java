@@ -3,19 +3,14 @@ package ru.practicum.ewm.controller.dto;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-/**
- * Gets or Sets PublicEventSortEnum
- */
+public enum EventReactionEnum {
+    LIKE("LIKE"),
 
-public enum PublicEventSortEnum {
-
-    EVENT_DATE("EVENT_DATE"),
-
-    VIEWS("VIEWS");
+    DISLIKE("DISLIKE");
 
     private String value;
 
-    PublicEventSortEnum(String value) {
+    EventReactionEnum(String value) {
         this.value = value;
     }
 
@@ -30,8 +25,8 @@ public enum PublicEventSortEnum {
     }
 
     @JsonCreator
-    public static PublicEventSortEnum fromValue(String value) {
-        for (PublicEventSortEnum b : PublicEventSortEnum.values()) {
+    public static EventReactionEnum fromValue(String value) {
+        for (EventReactionEnum b : EventReactionEnum.values()) {
             if (b.value.equals(value)) {
                 return b;
             }
@@ -39,4 +34,3 @@ public enum PublicEventSortEnum {
         throw new IllegalArgumentException("Unexpected value '" + value + "'");
     }
 }
-
