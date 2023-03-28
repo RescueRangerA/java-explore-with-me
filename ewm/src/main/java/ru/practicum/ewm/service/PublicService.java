@@ -196,75 +196,70 @@ public class PublicService {
         Map<Long, Long> eventWithRating;
         List<Long> eventIds;
 
-        switch (sort) {
-            case EVENT_DATE:
-                eventWithCount = eventRepository.findAllWithParticipationCount(
-                        onlyAvailable,
-                        specification,
-                        pageableParameters.toPageable(Sort.by(new Sort.Order(Sort.Direction.DESC, Event_.CREATED_ON)))
-                ).stream().collect(Collectors.toList());
+        if (Objects.equals(sort, PublicEventSortEnum.EVENT_DATE)) {
+            eventWithCount = eventRepository.findAllWithParticipationCount(
+                    onlyAvailable,
+                    specification,
+                    pageableParameters.toPageable(Sort.by(new Sort.Order(Sort.Direction.DESC, Event_.CREATED_ON)))
+            ).stream().collect(Collectors.toList());
 
-                eventIds = eventWithCount
-                        .stream()
-                        .map(EventWithCount::getEvent)
-                        .map(Event::getId)
-                        .collect(Collectors.toList());
+            eventIds = eventWithCount
+                    .stream()
+                    .map(EventWithCount::getEvent)
+                    .map(Event::getId)
+                    .collect(Collectors.toList());
 
-                views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
-                eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
-                break;
-            case VIEWS:
-                eventWithCount = eventRepository.findAllWithParticipationCount(
-                        onlyAvailable,
-                        specification,
-                        pageableParameters.toPageable(Sort.unsorted())
-                ).stream().collect(Collectors.toList());
+            views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+            eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
+        } else if (Objects.equals(sort, PublicEventSortEnum.VIEWS)) {
+            eventWithCount = eventRepository.findAllWithParticipationCount(
+                    onlyAvailable,
+                    specification,
+                    pageableParameters.toPageable(Sort.unsorted())
+            ).stream().collect(Collectors.toList());
 
-                eventIds = eventWithCount
-                        .stream()
-                        .map(EventWithCount::getEvent)
-                        .map(Event::getId)
-                        .collect(Collectors.toList());
+            eventIds = eventWithCount
+                    .stream()
+                    .map(EventWithCount::getEvent)
+                    .map(Event::getId)
+                    .collect(Collectors.toList());
 
-                views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
-                eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
+            views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+            eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
 
-                eventWithCount.sort(Comparator.comparingLong(a -> -views.getOrDefault(a.getEvent().getId(), 0L)));
-                break;
-            case RATINGS:
-                eventWithCount = eventRepository.findAllWithParticipationCount(
-                        onlyAvailable,
-                        specification,
-                        pageableParameters.toPageable(Sort.unsorted())
-                ).stream().collect(Collectors.toList());
+            eventWithCount.sort(Comparator.comparingLong(a -> -views.getOrDefault(a.getEvent().getId(), 0L)));
+        } else if (Objects.equals(sort, PublicEventSortEnum.RATINGS)) {
+            eventWithCount = eventRepository.findAllWithParticipationCount(
+                    onlyAvailable,
+                    specification,
+                    pageableParameters.toPageable(Sort.unsorted())
+            ).stream().collect(Collectors.toList());
 
-                eventIds = eventWithCount
-                        .stream()
-                        .map(EventWithCount::getEvent)
-                        .map(Event::getId)
-                        .collect(Collectors.toList());
+            eventIds = eventWithCount
+                    .stream()
+                    .map(EventWithCount::getEvent)
+                    .map(Event::getId)
+                    .collect(Collectors.toList());
 
-                views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
-                eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
+            views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+            eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
 
-                eventWithCount.sort(Comparator.comparingLong(a -> -eventWithRating.getOrDefault(a.getEvent().getId(), 0L)));
-                break;
-            default:
-                eventWithCount = eventRepository.findAllWithParticipationCount(
-                        onlyAvailable,
-                        specification,
-                        pageableParameters.toPageable(Sort.unsorted())
-                ).stream().collect(Collectors.toList());
+            eventWithCount.sort(Comparator.comparingLong(a -> -eventWithRating.getOrDefault(a.getEvent().getId(), 0L)));
+        } else {
+            eventWithCount = eventRepository.findAllWithParticipationCount(
+                    onlyAvailable,
+                    specification,
+                    pageableParameters.toPageable(Sort.unsorted())
+            ).stream().collect(Collectors.toList());
 
-                eventIds = eventWithCount
-                        .stream()
-                        .map(EventWithCount::getEvent)
-                        .map(Event::getId)
-                        .collect(Collectors.toList());
+            eventIds = eventWithCount
+                    .stream()
+                    .map(EventWithCount::getEvent)
+                    .map(Event::getId)
+                    .collect(Collectors.toList());
 
-                views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
-                eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
-                break;
+            views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+            eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
         }
 
         statsClientEwmWrapper.registerMultipleHitsByEvent(
