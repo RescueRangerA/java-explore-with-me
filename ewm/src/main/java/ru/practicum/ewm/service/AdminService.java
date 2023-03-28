@@ -151,8 +151,8 @@ public class AdminService {
                         e -> modelMapper.toEventFullDto(
                                 e.getEvent(),
                                 e.getParticipationCount(),
-                                views.get(e.getEvent().getId()),
-                                ratings.get(e.getEvent().getId())
+                                views.getOrDefault(e.getEvent().getId(), 0L),
+                                ratings.getOrDefault(e.getEvent().getId(), 0L)
                         )
                 ))
                 .collect(Collectors.toList());

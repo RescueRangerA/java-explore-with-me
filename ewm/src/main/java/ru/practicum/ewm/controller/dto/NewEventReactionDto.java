@@ -20,6 +20,21 @@ public class NewEventReactionDto {
     @JsonProperty("isLike")
     private Boolean isLike;
 
+    @Schema(name = "eventId", example = "999", description = "ID события", requiredMode = Schema.RequiredMode.REQUIRED)
+    public Long getEventId() {
+        return eventId;
+    }
+
+    @Schema(name = "userId", example = "999", description = "ID юзера", requiredMode = Schema.RequiredMode.REQUIRED)
+    public Long getUserId() {
+        return userId;
+    }
+
+    @Schema(name = "isLike", example = "true", description = "Флаг определяющий лайк это или дизлайк", requiredMode = Schema.RequiredMode.REQUIRED)
+    public Boolean getIsLike() {
+        return isLike;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

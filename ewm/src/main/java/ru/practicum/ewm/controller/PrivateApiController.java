@@ -396,7 +396,7 @@ public class PrivateApiController {
     }
 
     /**
-     * POST /users/{userId}/events/{eventId}/reaction : Добавление реакции
+     * POST /users/{userId}/events/{eventId}/reactions : Добавление реакции
      *
      * @param userId  id текущего пользователя (required)
      * @param eventId id редактируемого события (required)
@@ -409,7 +409,7 @@ public class PrivateApiController {
             operationId = "privateAddReaction",
             summary = "Добавление реакции",
             description = "Реакции могут две: лайк или дизлайк",
-            tags = {"Private: События"},
+            tags = {"Private: Реакции"},
             responses = {
                     @ApiResponse(responseCode = "201", description = "Реакция добавлена", content = {
                             @Content(mediaType = "application/json", schema = @Schema(implementation = NewEventReactionDto.class))
@@ -427,7 +427,7 @@ public class PrivateApiController {
     )
     @RequestMapping(
             method = RequestMethod.POST,
-            value = "/users/{userId}/events/{eventId}/reaction",
+            value = "/users/{userId}/events/{eventId}/reactions",
             produces = {"application/json"}
     )
     public ResponseEntity<NewEventReactionDto> privateAddReaction(
@@ -446,11 +446,11 @@ public class PrivateApiController {
     }
 
     /**
-     * DELETE /users/{userId}/events/{eventId}/reaction : Удаление реакции
+     * DELETE /users/{userId}/events/{eventId}/reactions : Удаление реакции
      *
      * @param userId  id текущего пользователя (required)
      * @param eventId id редактируемого события (required)
-     * @return Реакция удалена (status code 200)
+     * @return Реакция удалена (status code 204)
      * or Запрос составлен некорректно (status code 400)
      * or Событие или пользователь не найдено или недоступно (status code 404)
      */
@@ -458,9 +458,9 @@ public class PrivateApiController {
             operationId = "privateRemoveReaction",
             summary = "Удаление реакции",
             description = "Удаление реакции",
-            tags = {"Private: События"},
+            tags = {"Private: Реакции"},
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Реакция удалена", content = {
+                    @ApiResponse(responseCode = "204", description = "Реакция удалена", content = {
                             @Content(mediaType = "application/json", schema = @Schema(implementation = NewEventReactionDto.class))
                     }),
                     @ApiResponse(responseCode = "400", description = "Запрос составлен некорректно", content = {
@@ -473,7 +473,7 @@ public class PrivateApiController {
     )
     @RequestMapping(
             method = RequestMethod.DELETE,
-            value = "/users/{userId}/events/{eventId}/reaction",
+            value = "/users/{userId}/events/{eventId}/reactions",
             produces = {"application/json"}
     )
     public ResponseEntity<Void> privateRemoveReaction(
@@ -482,7 +482,7 @@ public class PrivateApiController {
     ) {
         privateService.removeLikeOrDislikeEvent(userId, eventId);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 }

@@ -299,8 +299,8 @@ public class PrivateService {
                         e -> modelMapper.toEventShortDto(
                                 e.getEvent(),
                                 e.getParticipationCount(),
-                                views.get(e.getEvent().getId()),
-                                eventWithRating.get(e.getEvent().getId())
+                                views.getOrDefault(e.getEvent().getId(), 0L),
+                                eventWithRating.getOrDefault(e.getEvent().getId(), 0L)
                         )
                 )
                 .collect(Collectors.toList());

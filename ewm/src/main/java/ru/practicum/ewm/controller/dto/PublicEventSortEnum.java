@@ -11,7 +11,9 @@ public enum PublicEventSortEnum {
 
     EVENT_DATE("EVENT_DATE"),
 
-    VIEWS("VIEWS");
+    VIEWS("VIEWS"),
+
+    RATINGS("RATINGS");
 
     private String value;
 
