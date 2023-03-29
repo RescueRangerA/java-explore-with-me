@@ -1765,6 +1765,178 @@
         ]
       }
     },
+    "/users/{userId}/events/{eventId}/reactions": {
+      "post": {
+        "description": "Реакции могут две: лайк или дизлайк",
+        "operationId": "privateAddReaction",
+        "parameters": [
+          {
+            "description": "id текущего пользователя",
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "description": "id события",
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "description": "реакция",
+            "in": "path",
+            "name": "reaction",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EventReactionEnum"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ParticipationRequestDto"
+                  }
+                }
+              }
+            },
+            "description": "Найдены запросы на участие"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "BAD_REQUEST",
+                  "reason": "Incorrectly made request.",
+                  "message": "Failed to convert value of type java.lang.String to required type int; nested exception is java.lang.NumberFormatException: For input string: ad",
+                  "timestamp": "2022-09-07 09:10:50"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Запрос составлен некорректно"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "NOT_FOUND",
+                  "reason": "The required object was not found.",
+                  "message": "Event with id=999 was not found",
+                  "timestamp": "2022-09-07 09:10:50"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Запрос составлен некорректно"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "CONFLICT",
+                  "reason": "For the requested operation the conditions are not met.",
+                  "message": "Cannot persist the event like because the event with id=999 not in the right state: CANCELED",
+                  "timestamp": "2023-01-21 16:56:19"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Нарушены правила добавления реакции"
+          }
+        },
+        "summary": "Добавление реакции",
+        "tags": [
+          "Private: Реакции"
+        ]
+      },
+      "delete": {
+        "description": "Удаление реакции",
+        "operationId": "privateRemoveReaction",
+        "parameters": [
+          {
+            "description": "id текущего пользователя",
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "description": "id события",
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Реакция удалена"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "BAD_REQUEST",
+                  "reason": "Incorrectly made request.",
+                  "message": "Failed to convert value of type java.lang.String to required type int; nested exception is java.lang.NumberFormatException: For input string: ad",
+                  "timestamp": "2022-09-07 09:10:50"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Запрос составлен некорректно"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "NOT_FOUND",
+                  "reason": "The required object was not found.",
+                  "message": "Event with id=999 was not found",
+                  "timestamp": "2022-09-07 09:10:50"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Запрос составлен некорректно"
+          }
+        },
+        "summary": "Удаление реакции",
+        "tags": [
+          "Private: Реакции"
+        ]
+      }
+
+    },
     "/users/{userId}/requests": {
       "get": {
         "description": "В случае, если по заданным фильтрам не найдено ни одной заявки, возвращает пустой список",
@@ -2830,8 +3002,44 @@
         "type": "string",
         "enum": [
           "EVENT_DATE",
-          "VIEWS"
+          "VIEWS",
+          "RATINGS"
         ]
+      },
+      "EventReactionEnum": {
+        "type": "string",
+        "enum": [
+          "LIKE",
+          "DISLIKE"
+        ]
+      },
+      "NewEventReactionDto": {
+        "type": "object",
+        "required": [
+          "eventId",
+          "userId",
+          "isLike"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "integer",
+            "description": "ID события",
+            "format": "int64",
+            "example": 999
+          },
+          "userId": {
+            "type": "integer",
+            "description": "ID юзера",
+            "format": "int64",
+            "example": 999
+          },
+          "isLike": {
+            "type": "boolean",
+            "description": "Флаг определяющий лайк это или дизлайк",
+            "example": true
+          }
+        },
+        "description": "Заявка на участие в событии"
       }
     }
   }

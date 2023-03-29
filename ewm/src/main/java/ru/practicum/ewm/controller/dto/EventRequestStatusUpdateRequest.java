@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import javax.annotation.Generated;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +16,7 @@ import java.util.Objects;
 @lombok.Builder
 @lombok.NoArgsConstructor
 @lombok.AllArgsConstructor
-
 @Schema(name = "EventRequestStatusUpdateRequest", description = "Изменение статуса запроса на участие в событии текущего пользователя")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2023-03-20T18:18:39.930348+04:00[Europe/Saratov]")
 public class EventRequestStatusUpdateRequest {
 
     @JsonProperty("requestIds")

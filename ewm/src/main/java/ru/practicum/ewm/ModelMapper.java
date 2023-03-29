@@ -87,7 +87,7 @@ public class ModelMapper {
         );
     }
 
-    public EventShortDto toEventShortDto(Event event, Long confirmedRequestsCount, Long viewsCount) {
+    public EventShortDto toEventShortDto(Event event, Long confirmedRequestsCount, Long viewsCount, Long rating) {
         return new EventShortDto(
                 event.getAnnotation(),
                 this.toCategoryDto(event.getCategory()),
@@ -97,11 +97,12 @@ public class ModelMapper {
                 this.toUserShortDto(event.getCreator()),
                 event.getPaid(),
                 event.getTitle(),
-                viewsCount
+                viewsCount,
+                rating
         );
     }
 
-    public EventFullDto toEventFullDto(Event event, Long confirmedRequestsCount, Long views) {
+    public EventFullDto toEventFullDto(Event event, Long confirmedRequestsCount, Long views, Long rating) {
         return new EventFullDto(
                 event.getAnnotation(),
                 this.toCategoryDto(event.getCategory()),
@@ -118,14 +119,16 @@ public class ModelMapper {
                 event.getRequestModeration(),
                 this.toStateEnum(event.getStatus()),
                 event.getTitle(),
-                views
+                views,
+                rating
         );
     }
 
     public CompilationDto toCompilationDto(
             EventCompilation eventCompilation,
             Map<Long, EventWithCount> eventAndParticipationCount,
-            Map<Long, Long> eventAndViews
+            Map<Long, Long> eventAndViews,
+            Map<Long, Long> eventAndRating
     ) {
         return new CompilationDto(
                 eventCompilation.getEvents()
@@ -133,7 +136,8 @@ public class ModelMapper {
                         .map(e -> this.toEventShortDto(
                                 e,
                                 eventAndParticipationCount.get(e.getId()).getParticipationCount(),
-                                eventAndViews.get(e.getId())
+                                eventAndViews.get(e.getId()),
+                                eventAndRating.get(e.getId())
                         ))
                         .collect(Collectors.toSet()),
                 eventCompilation.getId(),
@@ -169,6 +173,14 @@ public class ModelMapper {
         return new EventRequestStatusUpdateResult(
                 confirmedList.stream().map(this::toParticipationRequestDto).collect(Collectors.toList()),
                 rejectedList.stream().map(this::toParticipationRequestDto).collect(Collectors.toList())
+        );
+    }
+
+    public NewEventReactionDto toNewEventReactionDto(EventReaction eventReaction) {
+        return new NewEventReactionDto(
+                eventReaction.getId().getEvent().getId(),
+                eventReaction.getId().getUser().getId(),
+                eventReaction.getIsLike()
         );
     }
 

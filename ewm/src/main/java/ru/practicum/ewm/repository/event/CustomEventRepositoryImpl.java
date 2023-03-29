@@ -125,7 +125,6 @@ public class CustomEventRepositoryImpl implements CustomEventRepository {
         CriteriaQuery<Tuple> query = criteriaBuilder.createQuery(Tuple.class);
 
         Root<Event> eventRoot = query.from(Event.class);
-//        Fetch<Event, EventCategory> fetch = eventRoot.fetch(Event_.CATEGORY); // load "lazy" categories
 
         Join<Event, EventParticipationRequest> eventEventParticipationRequestJoin = eventRoot.join(
                 Event_.REQUESTS,
@@ -156,7 +155,7 @@ public class CustomEventRepositoryImpl implements CustomEventRepository {
         }
 
         query.where(wherePredicates.toArray(new Predicate[0]));
-        query.groupBy(eventEventParticipationRequestJoin, eventRoot);
+        query.groupBy(eventRoot);
 
         if (sort.isSorted()) {
             query.orderBy(toOrders(sort, eventRoot, criteriaBuilder));

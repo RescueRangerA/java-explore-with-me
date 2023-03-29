@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import javax.annotation.Generated;
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
 import java.util.Objects;
@@ -16,9 +15,7 @@ import java.util.Objects;
 @lombok.Builder
 @lombok.NoArgsConstructor
 @lombok.AllArgsConstructor
-
 @Schema(name = "UpdateEventUserRequest", description = "Данные для изменения информации о событии. Если поле в запросе не указано (равно null) - значит изменение этих данных не треубется.")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2023-03-20T18:18:39.930348+04:00[Europe/Saratov]")
 public class UpdateEventUserRequest {
 
     @JsonProperty("annotation")

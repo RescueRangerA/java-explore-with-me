@@ -1,5 +1,6 @@
 package ru.practicum.ewm.service;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -7,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.CustomDateTimeFormatter;
 import ru.practicum.ewm.EventDateValidator;
 import ru.practicum.ewm.ModelMapper;
+import ru.practicum.ewm.exception.eventreaction.EventReactionMutationViolationException;
 import ru.practicum.ewm.exception.request.EventRequestMutationViolationException;
 import ru.practicum.ewm.controller.dto.*;
 import ru.practicum.ewm.exception.AccessDeniedException;
@@ -17,14 +19,12 @@ import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.event.EventRepository;
 import ru.practicum.ewm.repository.event.EventWithCount;
 import ru.practicum.ewm.repository.eventcategory.EventCategoryRepository;
+import ru.practicum.ewm.repository.eventreaction.EventReactionRepository;
 import ru.practicum.ewm.repository.eventpaticipation.EventParticipationRequestRepository;
 import ru.practicum.ewm.repository.user.UserRepository;
 import ru.practicum.ewm.statsclient.StatsClientEwmWrapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,6 +40,8 @@ public class PrivateService {
     private final CustomDateTimeFormatter dateTimeFormatter;
     private final EventParticipationRequestRepository eventParticipationRequestRepository;
 
+    private final EventReactionRepository eventReactionRepository;
+
     private final EventDateValidator eventDateValidator;
 
     private final StatsClientEwmWrapper statsClientEwmWrapper;
@@ -50,7 +52,7 @@ public class PrivateService {
                           ModelMapper modelMapper,
                           CustomDateTimeFormatter dateTimeFormatter,
                           EventParticipationRequestRepository eventParticipationRequestRepository,
-                          StatsClientEwmWrapper statsClientEwmWrapper
+                          EventReactionRepository eventReactionRepository, StatsClientEwmWrapper statsClientEwmWrapper
     ) {
         this.userRepository = userRepository;
         this.eventCategoryRepository = eventCategoryRepository;
@@ -58,6 +60,7 @@ public class PrivateService {
         this.modelMapper = modelMapper;
         this.dateTimeFormatter = dateTimeFormatter;
         this.eventParticipationRequestRepository = eventParticipationRequestRepository;
+        this.eventReactionRepository = eventReactionRepository;
         this.statsClientEwmWrapper = statsClientEwmWrapper;
         this.eventDateValidator = new EventDateValidator();
     }
@@ -80,6 +83,7 @@ public class PrivateService {
 
         return modelMapper.toEventFullDto(
                 eventRepository.save(event),
+                0L,
                 0L,
                 0L
         );
@@ -234,7 +238,8 @@ public class PrivateService {
         return modelMapper.toEventFullDto(
                 eventWithCount.getEvent(),
                 eventWithCount.getParticipationCount(),
-                statsClientEwmWrapper.fetchViewsOfEvent(eventWithCount.getEvent())
+                statsClientEwmWrapper.fetchViewsOfEvent(eventWithCount.getEvent()),
+                eventReactionRepository.calculateEventRating(eventWithCount.getEvent())
         );
     }
 
@@ -284,13 +289,18 @@ public class PrivateService {
                 eventWithCount.stream().map(EventWithCount::getEvent).map(Event::getId).collect(Collectors.toList())
         );
 
+        Map<Long, Long> eventWithRating = eventReactionRepository.calculateEventsRating(
+                eventWithCount.stream().map(EventWithCount::getEvent).map(Event::getId).collect(Collectors.toList())
+        );
+
         return eventWithCount
                 .stream()
                 .map(
                         e -> modelMapper.toEventShortDto(
                                 e.getEvent(),
                                 e.getParticipationCount(),
-                                views.get(e.getEvent().getId())
+                                views.getOrDefault(e.getEvent().getId(), 0L),
+                                eventWithRating.getOrDefault(e.getEvent().getId(), 0L)
                         )
                 )
                 .collect(Collectors.toList());
@@ -395,7 +405,60 @@ public class PrivateService {
         return modelMapper.toEventFullDto(
                 event,
                 participationCount,
-                statsClientEwmWrapper.fetchViewsOfEvent(event)
+                statsClientEwmWrapper.fetchViewsOfEvent(event),
+                eventReactionRepository.calculateEventRating(event)
         );
+    }
+
+    @Transactional
+    public NewEventReactionDto addLikeOrDislikeEvent(Long userId, Long eventId, Boolean isLike) {
+        User currentUser = userRepository
+                .findById(userId)
+                .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(User.class, userId));
+
+        Event event = eventRepository
+                .findById(eventId)
+                .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(Event.class, eventId));
+
+        if (!event.getStatus().equals(EventStatus.PUBLISHED)) {
+            throw EventReactionMutationViolationException.ofIncorrectEventStatus(event);
+        }
+
+        EventParticipationRequest participationRequest = eventParticipationRequestRepository.findByCreatorAndEvent(
+                currentUser, event
+        ).orElseThrow(() -> EventReactionMutationViolationException.ofMissingParticipationRequest(event, currentUser));
+
+        if (!participationRequest.getStatus().equals(EventParticipationRequestStatus.CONFIRMED)) {
+            throw EventReactionMutationViolationException.ofParticipationRequestIncorrectStatus(
+                    participationRequest,
+                    event,
+                    currentUser
+            );
+        }
+
+        EventReaction eventReaction = eventReactionRepository.save(
+                new EventReaction(
+                        new EventReactionID(event, currentUser),
+                        isLike
+                )
+        );
+
+        return modelMapper.toNewEventReactionDto(eventReaction);
+    }
+
+    public void removeLikeOrDislikeEvent(Long userId, Long eventId) {
+        User currentUser = userRepository
+                .findById(userId)
+                .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(User.class, userId));
+
+        Event event = eventRepository
+                .findById(eventId)
+                .orElseThrow(() -> ExtendedEntityNotFoundException.ofEntity(Event.class, eventId));
+
+        try {
+            eventReactionRepository.deleteById(new EventReactionID(event, currentUser));
+        } catch (EmptyResultDataAccessException ignored) {
+
+        }
     }
 }

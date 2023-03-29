@@ -13,6 +13,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver;
 import ru.practicum.ewm.CustomDateTimeFormatter;
 import ru.practicum.ewm.exception.event.EventMutationViolationException;
+import ru.practicum.ewm.exception.eventreaction.EventReactionMutationViolationException;
 import ru.practicum.ewm.exception.generic.ExtendedEntityNotFoundException;
 import ru.practicum.ewm.exception.request.EventRequestMutationViolationException;
 import ru.practicum.ewm.controller.dto.ApiError;
@@ -34,7 +35,7 @@ public class ExceptionControllerAdvice {
         this.dateTimeFormatter = dateTimeFormatter;
     }
 
-    @ExceptionHandler({EventMutationViolationException.class, EventRequestMutationViolationException.class})
+    @ExceptionHandler({EventMutationViolationException.class, EventRequestMutationViolationException.class, EventReactionMutationViolationException.class})
     public ResponseEntity<ApiError> handleEventUpdateViolation(final Exception e) {
         logIfNeeded(e);
 

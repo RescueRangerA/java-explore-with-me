@@ -17,6 +17,7 @@ import ru.practicum.ewm.repository.event.EventWithCount;
 import ru.practicum.ewm.repository.event.GetEventsQuerySpecification;
 import ru.practicum.ewm.repository.eventcategory.EventCategoryRepository;
 import ru.practicum.ewm.repository.eventcompilation.EventCompilationRepository;
+import ru.practicum.ewm.repository.eventreaction.EventReactionRepository;
 import ru.practicum.ewm.statsclient.StatsClientEwmWrapper;
 
 import java.time.LocalDateTime;
@@ -32,6 +33,8 @@ public class PublicService {
 
     private final EventRepository eventRepository;
 
+    private final EventReactionRepository eventReactionRepository;
+
     private final ModelMapper modelMapper;
 
     private final CustomDateTimeFormatter dateTimeFormatter;
@@ -41,13 +44,14 @@ public class PublicService {
     public PublicService(EventCategoryRepository eventCategoryRepository,
                          EventCompilationRepository eventCompilationRepository,
                          EventRepository eventRepository,
-                         ModelMapper modelMapper,
+                         EventReactionRepository eventReactionRepository, ModelMapper modelMapper,
                          CustomDateTimeFormatter dateTimeFormatter,
                          StatsClientEwmWrapper statsClientEwmWrapper
     ) {
         this.eventCategoryRepository = eventCategoryRepository;
         this.eventCompilationRepository = eventCompilationRepository;
         this.eventRepository = eventRepository;
+        this.eventReactionRepository = eventReactionRepository;
         this.modelMapper = modelMapper;
         this.dateTimeFormatter = dateTimeFormatter;
         this.statsClientEwmWrapper = statsClientEwmWrapper;
@@ -88,12 +92,15 @@ public class PublicService {
                                 .collect(Collectors.toList())
                 );
 
-        Map<Long, Long> eventAndViews = statsClientEwmWrapper.fetchViewsOfEventIds(List.copyOf(eventWithCount.keySet()));
+        List<Long> eventIds = List.copyOf(eventWithCount.keySet());
+        Map<Long, Long> eventAndViews = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+        Map<Long, Long> eventWithRatings = eventReactionRepository.calculateEventsRating(eventIds);
 
         return modelMapper.toCompilationDto(
                 eventCompilation,
                 eventWithCount,
-                eventAndViews
+                eventAndViews,
+                eventWithRatings
         );
     }
 
@@ -112,7 +119,10 @@ public class PublicService {
         Map<Long, EventWithCount> eventWithCount = eventRepository
                 .findAllByIdsAndAppendConfirmedParticipationCount(List.copyOf(eventsIds));
 
-        Map<Long, Long> eventAndViews = statsClientEwmWrapper.fetchViewsOfEventIds(List.copyOf(eventWithCount.keySet()));
+
+        List<Long> eventIds = List.copyOf(eventWithCount.keySet());
+        Map<Long, Long> eventAndViews = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+        Map<Long, Long> eventWithRatings = eventReactionRepository.calculateEventsRating(eventIds);
 
         return eventCompilationPage
                 .stream()
@@ -120,7 +130,8 @@ public class PublicService {
                         eventCompilation -> modelMapper.toCompilationDto(
                                 eventCompilation,
                                 eventWithCount,
-                                eventAndViews
+                                eventAndViews,
+                                eventWithRatings
                         )
                 )
                 .collect(Collectors.toList());
@@ -145,7 +156,8 @@ public class PublicService {
         return modelMapper.toEventFullDto(
                 eventWithCount.getEvent(),
                 eventWithCount.getParticipationCount(),
-                statsClientEwmWrapper.fetchViewsOfEvent(eventWithCount.getEvent())
+                statsClientEwmWrapper.fetchViewsOfEvent(eventWithCount.getEvent()),
+                eventReactionRepository.calculateEventRating(eventWithCount.getEvent())
         );
     }
 
@@ -181,6 +193,9 @@ public class PublicService {
 
         List<EventWithCount> eventWithCount;
         Map<Long, Long> views;
+        Map<Long, Long> eventWithRating;
+        List<Long> eventIds;
+
         if (Objects.equals(sort, PublicEventSortEnum.EVENT_DATE)) {
             eventWithCount = eventRepository.findAllWithParticipationCount(
                     onlyAvailable,
@@ -188,9 +203,14 @@ public class PublicService {
                     pageableParameters.toPageable(Sort.by(new Sort.Order(Sort.Direction.DESC, Event_.CREATED_ON)))
             ).stream().collect(Collectors.toList());
 
-            views = statsClientEwmWrapper.fetchViewsOfEventIds(
-                    eventWithCount.stream().map(EventWithCount::getEvent).map(Event::getId).collect(Collectors.toList())
-            );
+            eventIds = eventWithCount
+                    .stream()
+                    .map(EventWithCount::getEvent)
+                    .map(Event::getId)
+                    .collect(Collectors.toList());
+
+            views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+            eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
         } else if (Objects.equals(sort, PublicEventSortEnum.VIEWS)) {
             eventWithCount = eventRepository.findAllWithParticipationCount(
                     onlyAvailable,
@@ -198,11 +218,33 @@ public class PublicService {
                     pageableParameters.toPageable(Sort.unsorted())
             ).stream().collect(Collectors.toList());
 
-            views = statsClientEwmWrapper.fetchViewsOfEventIds(
-                    eventWithCount.stream().map(EventWithCount::getEvent).map(Event::getId).collect(Collectors.toList())
-            );
+            eventIds = eventWithCount
+                    .stream()
+                    .map(EventWithCount::getEvent)
+                    .map(Event::getId)
+                    .collect(Collectors.toList());
 
-            eventWithCount.sort(Comparator.comparingLong(a -> views.get(a.getEvent().getId())));
+            views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+            eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
+
+            eventWithCount.sort(Comparator.comparingLong(a -> -views.getOrDefault(a.getEvent().getId(), 0L)));
+        } else if (Objects.equals(sort, PublicEventSortEnum.RATINGS)) {
+            eventWithCount = eventRepository.findAllWithParticipationCount(
+                    onlyAvailable,
+                    specification,
+                    pageableParameters.toPageable(Sort.unsorted())
+            ).stream().collect(Collectors.toList());
+
+            eventIds = eventWithCount
+                    .stream()
+                    .map(EventWithCount::getEvent)
+                    .map(Event::getId)
+                    .collect(Collectors.toList());
+
+            views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+            eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
+
+            eventWithCount.sort(Comparator.comparingLong(a -> -eventWithRating.getOrDefault(a.getEvent().getId(), 0L)));
         } else {
             eventWithCount = eventRepository.findAllWithParticipationCount(
                     onlyAvailable,
@@ -210,9 +252,14 @@ public class PublicService {
                     pageableParameters.toPageable(Sort.unsorted())
             ).stream().collect(Collectors.toList());
 
-            views = statsClientEwmWrapper.fetchViewsOfEventIds(
-                    eventWithCount.stream().map(EventWithCount::getEvent).map(Event::getId).collect(Collectors.toList())
-            );
+            eventIds = eventWithCount
+                    .stream()
+                    .map(EventWithCount::getEvent)
+                    .map(Event::getId)
+                    .collect(Collectors.toList());
+
+            views = statsClientEwmWrapper.fetchViewsOfEventIds(eventIds);
+            eventWithRating = eventReactionRepository.calculateEventsRating(eventIds);
         }
 
         statsClientEwmWrapper.registerMultipleHitsByEvent(
@@ -225,7 +272,8 @@ public class PublicService {
                         e -> modelMapper.toEventShortDto(
                                 e.getEvent(),
                                 e.getParticipationCount(),
-                                views.get(e.getEvent().getId())
+                                views.getOrDefault(e.getEvent().getId(), 0L),
+                                eventWithRating.getOrDefault(e.getEvent().getId(), 0L)
                         )
                 )
                 .collect(Collectors.toList());

@@ -79,3 +79,15 @@ create table if not exists compilation_event
     constraint fk_compilation_event_event
         foreign key (event_id) references event
 );
+
+create table if not exists event_reaction
+(
+    event_id bigint,
+    user_id  bigint,
+    is_like  boolean,
+    primary key (event_id, user_id),
+    constraint fk_event_reaction_event
+        foreign key (event_id) references event,
+    constraint fk_compilation_reaction_user
+        foreign key (user_id) references accounts
+);
